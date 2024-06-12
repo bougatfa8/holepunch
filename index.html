@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <script type='module' src='./app.js'></script>
+
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 9;
+            background-color: white;
+            background-position: center; 
+          }
+        .sidebar {
+            width: 30%;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(3, 75, 26, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: rgb(25, 91, 14);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .input-group input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            flex: 1;
+            margin-right: 10px;
+        }
+        .input-group button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .main-content {
+            margin-left: 30%;
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+        .room-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+    </style>
+
+</head>
+<body>
+  <pear-ctrl></pear-ctrl>
+
+    <div class="sidebar">
+        <div class="input-group">
+            <input type="text" placeholder="Enter topic" id="topicInput">
+            <button id>Join</button>
+            <button id="create-chat-room">➕ </button>
+        </div>
+        <div id="chat-room-topic"></div> <!-- Display topics here -->
+
+    </div>
+    <div class="main-content">
+        <div class="room-content" id="roomContent">
+            <!-- Room content will be displayed here -->
+        </div>
+    </div>
+
+</body>
+</html>
