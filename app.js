@@ -10,7 +10,7 @@ const conns = []
 let core
 let topic 
 document.querySelector('#create-chat-room').addEventListener('click', formApply);
-document.querySelector('#join-chat-room').addEventListener('click', formApply);
+document.querySelector('#join-chat-room').addEventListener('click', formApplyTopic);
 
 // document.querySelector('#messages').addEventListener('submit', sendMessage)
     
@@ -75,6 +75,16 @@ function formApply(){
       alert('Room creation cancelled.');
   }
 }
+
+
+function formApplyTopic(){
+  var topic =document.querySelector('#NameOrTopicInput').value;
+  if (topic) {
+    joinSwarmTopic(topic)
+  } else {
+      alert('Room Joined cancelled.');
+  }
+}
   
 
 
@@ -98,9 +108,11 @@ async function joinSwarm (topicBuffer,roomName) {
     const newDiv = document.createElement('div');
     newDiv.className = 'chat-room-topic'; // Assign the class to the new div
     newDiv.innerText = roomName;
+    await room.close()
+
     newDiv.addEventListener('click', () => {
       document.querySelector('#messages').innerHTML = '';
-  
+
       retrieveMessage(topic)
   })
   ;
@@ -110,6 +122,41 @@ async function joinSwarm (topicBuffer,roomName) {
     core = new Hypercore(topic)
     discovery.flushed()
   }
+
+
+
+  async function joinSwarmTopic (topicString) {
+    const topicBuffer = b4a.from(topicString,'hex')
+    console.log(topicBuffer)
+    const discovery = swarm.join(topicBuffer, { client: true, server: true })  
+    const topic =topicString
+    alert('Creating room: ' + 'roomName' + ' with topic: ' + topic);
+    // Convert the object to a JSON string
+    const roomData = JSON.stringify({ 'roomName': topic });
+
+    // Append the JSON string to room_core
+    room_core.append(roomData);
+    const chatRoomTopic = document.querySelector('#chat-room-topic');
+
+    const newDiv = document.createElement('div');
+    newDiv.className = 'chat-room-topic'; // Assign the class to the new div
+    newDiv.innerText = 'roomName';
+
+    newDiv.addEventListener('click', () => {
+      document.querySelector('#messages').innerHTML = '';
+
+      retrieveMessage(topic)
+  })
+  ;
+    await room_core.close()
+
+    chatRoomTopic.appendChild(newDiv);
+    core = new Hypercore(topic)
+    discovery.flushed()
+  }
+
+
+
   document.querySelector('#message-form').addEventListener('submit', sendMessage)
 
   async function retrieveMessage(topic) {
