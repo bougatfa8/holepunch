@@ -10,14 +10,21 @@ const conns = []
 let core
 let topic 
 document.querySelector('#create-chat-room').addEventListener('click', formApply);
-document.querySelector('#join-chat-room').addEventListener('click', formApply);    
+document.querySelector('#join-chat-room').addEventListener('click', formApply);
+
+// document.querySelector('#messages').addEventListener('submit', sendMessage)
+    
+
+
 
 async function initializeRoom() {
   await room_core.ready();  // Wait for the room_core to be ready
   const chatRoomTopic = document.querySelector('#chat-room-topic');
   console.log('Initializing room');
 
+  if(room_core.length  > 0) {
 
+  
   for (let i = 0; i < room_core.length; i++) {
       const block = await room_core.get(i);
       const jsonObject = JSON.parse(block);
@@ -37,7 +44,7 @@ async function initializeRoom() {
       chatRoomTopic.appendChild(newDiv);
   }
   await room_core.close()
-
+  }
 }
 
 
@@ -97,7 +104,7 @@ async function joinSwarm (topicBuffer,roomName) {
       retrieveMessage(topic)
   })
   ;
-    await core.close()
+    await room_core.close()
 
     chatRoomTopic.appendChild(newDiv);
     core = new Hypercore(topic)
