@@ -4,29 +4,42 @@ import b4a from 'b4a'
 import Hypercore from 'hypercore'
 import Hyperbee from 'hyperbee'
 
+let room_core = new Hypercore('room');
 const swarm = new Hyperswarm()
 const conns = []
 let core
-
-let room_core = new Hyperbee(new Hypercore('room'));
-
+let topic 
 document.querySelector('#create-chat-room').addEventListener('click', formApply);
-
-function cas (prev, next) {
-  // can use same-data or same-object lib, depending on the value complexity
-  return prev.value !== next.value
-}
+document.querySelector('#join-chat-room').addEventListener('click', formApply);    
 
 async function initializeRoom() {
-    await room_core.ready();  // Wait for the room_core to be ready
-    const chatRoomTopic = document.querySelector('#chat-room-topic');
-    console.log('await db.get')
-    let result = await room_core.get('room')
-    const newDiv = document.createElement('div');
-    newDiv.innerText = result.key
-    chatRoomTopic.appendChild(newDiv);
-    
+  await room_core.ready();  // Wait for the room_core to be ready
+  const chatRoomTopic = document.querySelector('#chat-room-topic');
+  console.log('Initializing room');
+
+
+  for (let i = 0; i < room_core.length; i++) {
+      const block = await room_core.get(i);
+      const jsonObject = JSON.parse(block);
+      // Retrieve the key from the object
+      const key = Object.keys(jsonObject)[0];
+      const value = jsonObject[key];
+      console.log(value)
+      const newDiv = document.createElement('div');
+      newDiv.className = 'chat-room-topic'; 
+      newDiv.innerText = key;
+      newDiv.addEventListener('click', () => {
+        document.querySelector('#messages').innerHTML = '';
+        retrieveMessage(value)
+        topic = value;
+    });
+  
+      chatRoomTopic.appendChild(newDiv);
+  }
+  await room_core.close()
+
 }
+
 
 // Call the function to initialize the room
 initializeRoom();
@@ -39,31 +52,28 @@ swarm.on('connection', conn => {
     conn.once('close', () => conns.splice(conns.indexOf(conn), 1))
     conn.on('data', data => {
       console.log(`${name}: ${data}`)
-      core.append((`${name}: ${data}`))
+      const roomMessage = JSON.stringify({ [name]: data });
+      // Append the JSON string to room_core
+      core.append(roomMessage);
     })
     conn.on('error', e => console.log(`Connection error: ${e}`))
   })
 
 
 function formApply(){
-           // Prompt the user to enter a room name
-           var roomName = prompt("Please enter the room name:");
-
-           // Topic for the room (example)
-           var topic = "Some long topic name here";
-
-           // Create an alert with the room name and the topic
-           if (roomName) {
-                createChatRoom(roomName)
-               alert('Creating room: ' + roomName + ' with topic: ' + topic.substring(0, 11));
-           } else {
-               alert('Room creation cancelled.');
-           }
+  var roomName =document.querySelector('#NameOrTopicInput').value;
+  if (roomName) {
+      createChatRoom(roomName)
+  } else {
+      alert('Room creation cancelled.');
+  }
 }
   
+
+
+
 function createChatRoom(roomName) {
   const topicBuffer = crypto.randomBytes(32)
-
   joinSwarm(topicBuffer,roomName)
 }
 
@@ -71,16 +81,73 @@ async function joinSwarm (topicBuffer,roomName) {
     const discovery = swarm.join(topicBuffer, { client: true, server: true })  
     const topic = b4a.toString(topicBuffer, 'hex')
     alert('Creating room: ' + roomName + ' with topic: ' + topic);
-    room_core.put(roomName,topic , { cas })
-    const chatRoomTopic = document.querySelector('#chat-room-topic');
-    const newDiv = document.createElement('div');
-    newDiv.innerText = roomName;
-    chatRoomTopic.appendChild(newDiv);
+    // Convert the object to a JSON string
+    const roomData = JSON.stringify({ [roomName]: topic });
 
+    // Append the JSON string to room_core
+    room_core.append(roomData);
+    const chatRoomTopic = document.querySelector('#chat-room-topic');
+
+    const newDiv = document.createElement('div');
+    newDiv.className = 'chat-room-topic'; // Assign the class to the new div
+    newDiv.innerText = roomName;
+    newDiv.addEventListener('click', () => {
+      document.querySelector('#messages').innerHTML = '';
+  
+      retrieveMessage(topic)
+  })
+  ;
+    await core.close()
+
+    chatRoomTopic.appendChild(newDiv);
     core = new Hypercore(topic)
     discovery.flushed()
   }
+  document.querySelector('#message-form').addEventListener('submit', sendMessage)
 
+  async function retrieveMessage(topic) {
 
+    console.log('retrieve message');
+    const core = new Hypercore(topic);
+  
+    await core.ready();
+    for (let i = 0; i < core.length; i++) {
+      const block = await core.get(i); // Await the promise resolution
+      const jsonObject = JSON.parse(block);
+      
+      // Retrieve the key from the object
+      const from = Object.keys(jsonObject)[0];
+      const message = jsonObject[from];
+      console.log(message); // Log the message
+  
+      const $div = document.createElement('div');
+      $div.textContent = `<${from}> ${message}`; // Correctly set the text content
+      document.querySelector('#messages').appendChild($div);
+    }
+    core.close();
+  }
+  
 
-    
+  function sendMessage (e) {
+    const core = new Hypercore(topic);
+    const message = document.querySelector('#message').value
+    document.querySelector('#message').value = ''
+    e.preventDefault()
+    onMessageAdded('You', message)
+    // Send the message to all peers (that you are connected to)
+    const peers = [...swarm.connections]
+      for (const peer of peers) {
+        peer.write(message)
+      }
+      console.log('Sent message')
+      const roomMessage = JSON.stringify({ You: message });
+      // Append the JSON string to room_core
+      core.append(roomMessage);
+  }
+  
+  // appends element to #messages element with content set to sender and message
+  function onMessageAdded (from, message) {
+    const $div = document.createElement('div')
+    $div.textContent = `<${from}> ${message}`
+    document.querySelector('#messages').appendChild($div)
+  }
