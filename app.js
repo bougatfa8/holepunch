@@ -97,18 +97,22 @@ async function joinSwarm(topicBuffer, roomName) {
   chatRoomTopic.appendChild(newDiv);
   discovery.flushed();
 }
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
 
 async function joinSwarmTopic(topicString) {
   const topicBuffer = b4a.from(topicString, 'hex');
   const discovery = swarm.join(topicBuffer, { client: true, server: true });
   topic = topicString;
+  const name = 'room'+getRandomInt(3000)
   alert('Creating room: ' + 'roomName' + ' with topic: ' + topic);
-  const roomData = JSON.stringify({ 'room1': topic });
+  const roomData = JSON.stringify({ [name]: topic });
   await room_core.append(roomData);  // Ensure data is appended
   const chatRoomTopic = document.querySelector('#chat-room-topic');
   const newDiv = document.createElement('div');
   newDiv.className = 'chat-room-topic';
-  newDiv.innerText = 'room1';
+  newDiv.innerText = name;
 
   newDiv.addEventListener('click', () => {
     document.querySelector('#messages').innerHTML = '';
