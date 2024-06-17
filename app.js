@@ -50,7 +50,7 @@ swarm.on('connection', conn => {
   conn.on('data', data => {
     console.log(`${name}: ${data}`);
     const roomMessage = JSON.stringify({ [name]: data });
-    core.append(roomMessage);
+    // core.append(roomMessage);
     onMessageAdded(name, data);
   });
   conn.on('error', e => console.log(`Connection error: ${e}`));
@@ -81,6 +81,8 @@ function createChatRoom(roomName) {
 
 async function joinSwarm(topicBuffer, roomName) {
   const discovery = swarm.join(topicBuffer, { client: true, server: true });
+  discovery.flushed();
+
   topic = b4a.toString(topicBuffer, 'hex');
   alert('Creating room: ' + roomName + ' with topic: ' + topic);
   const roomData = JSON.stringify({ [roomName]: topic });
@@ -95,7 +97,6 @@ async function joinSwarm(topicBuffer, roomName) {
     retrieveMessage(topic);
   });
   chatRoomTopic.appendChild(newDiv);
-  discovery.flushed();
 }
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
