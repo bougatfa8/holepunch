@@ -43,7 +43,7 @@ initializeRoom();
 swarm.on('connection', conn => {
   const name = b4a.toString(conn.remotePublicKey, 'hex');
   console.log('* got a connection from:', name, '*');
-  conn.write('name of the room')
+  conn.write('New Peer joined')
   conns.push(conn);
 
   conn.once('close', () => conns.splice(conns.indexOf(conn), 1));
@@ -104,6 +104,8 @@ function getRandomInt(max) {
 async function joinSwarmTopic(topicString) {
   const topicBuffer = b4a.from(topicString, 'hex');
   const discovery = swarm.join(topicBuffer, { client: true, server: true });
+  discovery.flushed();
+
   topic = topicString;
   const name = 'room'+getRandomInt(3000)
   alert('Creating room: ' + 'roomName' + ' with topic: ' + topic);
@@ -120,7 +122,6 @@ async function joinSwarmTopic(topicString) {
   });
 
   chatRoomTopic.appendChild(newDiv);
-  discovery.flushed();
 }
 
 document.querySelector('#message-form').addEventListener('submit', sendMessage);
